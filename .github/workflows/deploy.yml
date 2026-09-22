@@ -1,4 +1,4 @@
-name: ChronoGrid Nexus Deployment
+name: bajak laut
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Project Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Execute Production Build
         run: npm run build
