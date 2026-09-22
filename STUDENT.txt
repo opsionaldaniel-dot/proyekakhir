@@ -1,0 +1,2 @@
+APP_URL=https://FIRMAN1975.github.io/dicoding/
+MAP_SERVICE_API_KEY=OpenStreetMap
