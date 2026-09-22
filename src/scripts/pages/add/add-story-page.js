@@ -5,43 +5,41 @@ import L from 'leaflet';
 class AddStoryPage {
   async render() {
     return `
-      <section class="add-story-section container">
-        <h1>Add New Story</h1>
-        <form id="add-story-form">
-          <div class="form-group">
-            <label for="description">Description</label>
-            <textarea id="description" rows="4" required placeholder="Tuliskan cerita Anda..."></textarea>
+      <section class="st-form-wrapper large">
+        <h1 class="st-title">Catat Log Pelayaran Baru</h1>
+        <form id="form-pirate-log">
+          <div class="st-group">
+            <label for="log-desc" class="st-label">Catatan Perjalanan</label>
+            <textarea id="log-desc" class="st-input" rows="4" required placeholder="Ceritakan apa yang terjadi di perairan ini..."></textarea>
           </div>
 
-          <div class="form-group">
-            <label for="photo">Photo (Upload or Capture)</label>
-            <input type="file" id="photo" accept="image/*" class="mb-2">
+          <div class="st-group">
+            <label for="log-photo" class="st-label">Bukti Visual (Pilih Gambar / Kamera)</label>
+            <input type="file" id="log-photo" accept="image/*" class="st-input" style="padding-left: 0; background: transparent; border: none; margin-bottom: 10px;">
 
-            <!-- Camera Stream for Capture -->
-            <div class="camera-controls">
-              <button type="button" id="start-camera" class="btn btn-secondary">Open Camera</button>
-              <button type="button" id="capture-photo" class="btn btn-secondary" style="display:none;">Capture Photo</button>
-              <button type="button" id="stop-camera" class="btn btn-secondary" style="display:none;">Stop Camera</button>
+            <!-- Kontrol Teropong (Kamera) -->
+            <div style="display:flex; gap:10px; flex-wrap: wrap; margin-bottom: 10px;">
+              <button type="button" id="btn-open-lens" class="st-btn st-btn-outline">Buka Teropong</button>
+              <button type="button" id="btn-capture-lens" class="st-btn st-btn-primary" style="display:none;">Jepret Gambar</button>
+              <button type="button" id="btn-close-lens" class="st-btn st-btn-danger" style="display:none;">Tutup Teropong</button>
             </div>
-            <video id="camera-preview" autoplay style="display:none; max-width:100%; margin-top:10px; border-radius:8px;"></video>
-            <canvas id="camera-canvas" style="display:none;"></canvas>
-
-            <img id="photo-preview" src="" alt="Selected photo preview" style="display:none; max-width: 100%; margin-top: 10px; border-radius:8px;">
+            
+            <video id="lens-preview" autoplay style="display:none; width:100%; border-radius:var(--st-radius); border: 2px solid var(--st-primary);"></video>
+            <canvas id="lens-canvas" style="display:none;"></canvas>
+            <img id="result-preview" src="" alt="Pratinjau tangkapan" style="display:none; width:100%; margin-top: 10px; border-radius:var(--st-radius); border: 2px solid var(--st-primary);">
           </div>
 
-          <div class="form-group">
-            <label>Location (Click on map to select)</label>
-            <div id="add-map" class="map" style="height: 250px;"></div>
-            <div class="location-inputs mt-2">
-              <label for="lat">Latitude:</label>
-              <input type="number" id="lat" step="any" readonly>
-              <label for="lon">Longitude:</label>
-              <input type="number" id="lon" step="any" readonly>
+          <div class="st-group">
+            <label class="st-label">Titik Koordinat (Tandai di Peta)</label>
+            <div id="pirate-map-picker" class="st-map-box" style="height: 250px; border-width: 1px; margin-bottom: 12px;"></div>
+            <div style="display:flex; gap:10px;">
+              <input type="number" id="coord-lat" class="st-input" step="any" placeholder="Garis Lintang (Latitude)" readonly>
+              <input type="number" id="coord-lon" class="st-input" step="any" placeholder="Garis Bujur (Longitude)" readonly>
             </div>
           </div>
 
-          <button type="submit" class="btn btn-primary mt-2">Submit Story</button>
-          <div id="add-message" class="message mt-2"></div>
+          <button type="submit" class="st-btn st-btn-primary st-mt">Kirim Log Pelayaran</button>
+          <div id="log-status-msg" class="st-alert" style="display:none;"></div>
         </form>
       </section>
     `;
@@ -53,8 +51,8 @@ class AddStoryPage {
     this.photoFile = null;
     this.mediaStream = null;
 
-    this.form = document.getElementById('add-story-form');
-    this.messageDiv = document.getElementById('add-message');
+    this.form = document.getElementById('form-pirate-log');
+    this.messageDiv = document.getElementById('log-status-msg');
     this.submitBtn = this.form.querySelector('button[type="submit"]');
 
     this._initMap();
@@ -62,9 +60,9 @@ class AddStoryPage {
 
     this.form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const description = document.getElementById('description').value;
-      const lat = document.getElementById('lat').value;
-      const lon = document.getElementById('lon').value;
+      const description = document.getElementById('log-desc').value;
+      const lat = document.getElementById('coord-lat').value;
+      const lon = document.getElementById('coord-lon').value;
       this.presenter.addStory(description, this.photoFile, lat, lon);
     });
 
@@ -73,23 +71,24 @@ class AddStoryPage {
 
   showLoading() {
     this.submitBtn.disabled = true;
-    this.submitBtn.textContent = 'Submitting...';
-    this.messageDiv.textContent = '';
-    this.messageDiv.className = 'message';
+    this.submitBtn.textContent = 'Menyimpan Log...';
+    this.messageDiv.style.display = 'none';
   }
 
   showError(message) {
     this.submitBtn.disabled = false;
-    this.submitBtn.textContent = 'Submit Story';
+    this.submitBtn.textContent = 'Kirim Log Pelayaran';
     this.messageDiv.textContent = message;
-    this.messageDiv.className = 'message error-message';
+    this.messageDiv.className = 'st-alert st-alert-error';
+    this.messageDiv.style.display = 'block';
   }
 
-  onSuccess(message = 'Story added successfully!') {
+  onSuccess(message = 'Log pelayaran berhasil dicatat ke dalam jurnal!') {
     this.submitBtn.disabled = false;
-    this.submitBtn.textContent = 'Submit Story';
+    this.submitBtn.textContent = 'Kirim Log Pelayaran';
     this.messageDiv.textContent = message;
-    this.messageDiv.className = 'message success-message';
+    this.messageDiv.className = 'st-alert st-alert-success';
+    this.messageDiv.style.display = 'block';
     setTimeout(() => {
       window.location.hash = '#/';
     }, 1500);
@@ -97,17 +96,19 @@ class AddStoryPage {
 
   onOfflineSuccess() {
     this.submitBtn.disabled = false;
-    this.submitBtn.textContent = 'Submit Story';
-    this.messageDiv.textContent = '⚡ Disimpan offline di IndexedDB! Story akan otomatis dikirim saat internet terhubung kembali.';
-    this.messageDiv.className = 'message success-message';
+    this.submitBtn.textContent = 'Kirim Log Pelayaran';
+    this.messageDiv.textContent = '⚓ Kapal di luar jangkauan! Log disimpan di peti lokal dan akan dikirim saat jangkar berlabuh.';
+    this.messageDiv.className = 'st-alert st-alert-success';
+    this.messageDiv.style.display = 'block';
     setTimeout(() => {
       window.location.hash = '#/';
     }, 2000);
   }
 
   _initMap() {
-    const map = L.map('add-map').setView([-6.200000, 106.816666], 5);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const map = L.map('pirate-map-picker').setView([-6.200000, 106.816666], 5);
+    // Menggunakan peta gelap agar selaras dengan tema
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map);
 
@@ -115,8 +116,8 @@ class AddStoryPage {
 
     map.on('click', (e) => {
       const { lat, lng } = e.latlng;
-      document.getElementById('lat').value = lat;
-      document.getElementById('lon').value = lng;
+      document.getElementById('coord-lat').value = lat;
+      document.getElementById('coord-lon').value = lng;
 
       if (marker) {
         marker.setLatLng(e.latlng);
@@ -127,8 +128,8 @@ class AddStoryPage {
   }
 
   _initPhotoInputs() {
-    const photoInput = document.getElementById('photo');
-    const photoPreview = document.getElementById('photo-preview');
+    const photoInput = document.getElementById('log-photo');
+    const photoPreview = document.getElementById('result-preview');
 
     photoInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -140,11 +141,11 @@ class AddStoryPage {
       }
     });
 
-    const startCameraBtn = document.getElementById('start-camera');
-    const stopCameraBtn = document.getElementById('stop-camera');
-    const captureBtn = document.getElementById('capture-photo');
-    const video = document.getElementById('camera-preview');
-    const canvas = document.getElementById('camera-canvas');
+    const startCameraBtn = document.getElementById('btn-open-lens');
+    const stopCameraBtn = document.getElementById('btn-close-lens');
+    const captureBtn = document.getElementById('btn-capture-lens');
+    const video = document.getElementById('lens-preview');
+    const canvas = document.getElementById('lens-canvas');
 
     startCameraBtn.addEventListener('click', async () => {
       try {
@@ -156,7 +157,7 @@ class AddStoryPage {
         captureBtn.style.display = 'inline-block';
         photoPreview.style.display = 'none';
       } catch (err) {
-        alert('Kamera tidak dapat diakses atau ditolak.');
+        alert('Teropong kamera tidak dapat diakses atau ditolak oleh kapten.');
       }
     });
 
@@ -169,7 +170,7 @@ class AddStoryPage {
         canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
         canvas.toBlob((blob) => {
-          this.photoFile = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+          this.photoFile = new File([blob], 'tangkapan-teropong.jpg', { type: 'image/jpeg' });
           photoPreview.src = URL.createObjectURL(this.photoFile);
           photoPreview.style.display = 'block';
           this._stopCamera();
@@ -183,10 +184,10 @@ class AddStoryPage {
       this.mediaStream.getTracks().forEach((track) => track.stop());
       this.mediaStream = null;
     }
-    const video = document.getElementById('camera-preview');
-    const startBtn = document.getElementById('start-camera');
-    const stopBtn = document.getElementById('stop-camera');
-    const captureBtn = document.getElementById('capture-photo');
+    const video = document.getElementById('lens-preview');
+    const startBtn = document.getElementById('btn-open-lens');
+    const stopBtn = document.getElementById('btn-close-lens');
+    const captureBtn = document.getElementById('btn-capture-lens');
     if (video) video.style.display = 'none';
     if (startBtn) startBtn.style.display = 'inline-block';
     if (stopBtn) stopBtn.style.display = 'none';

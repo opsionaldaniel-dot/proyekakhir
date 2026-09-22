@@ -8,25 +8,25 @@ L.Icon.Default.imagePath = 'https://unpkg.com/leaflet@1.9.4/dist/images/';
 class HomePage {
   async render() {
     return `
-      <section class="home-section">
-        <div id="offline-banner" class="offline-banner" style="display: none;">
-          ⚡ Anda sedang offline. Menampilkan data cerita yang tersimpan dalam cache.
+      <section class="st-container">
+        <div id="offline-banner" class="st-offline-banner" style="display: none;">
+          ⚓ Kapal keluar dari jangkauan sinyal. Menampilkan peta harta karun dari kompas lokal.
         </div>
 
-        <div class="home-header">
-          <h1>Stories Map & Feed</h1>
-          <div class="search-box">
-            <!-- INI PERBAIKAN UNTUK REVIEWER: Label aksesibilitas -->
-            <label for="home-search" class="sr-only">Search stories</label>
-            <input type="text" id="home-search" placeholder="Search stories..." aria-label="Search stories">
+        <div class="st-feed-header">
+          <h1 style="font-size:2.2rem; font-weight:800; color: var(--st-primary);">Peta Penjelajahan</h1>
+          <div>
+            <!-- LABEL WAJIB DARI REVIEWER -->
+            <label for="home-search" class="sr-only">Cari log pelayaran</label>
+            <input type="text" id="home-search" class="st-search" placeholder="Cari jejak pelayaran..." aria-label="Search stories">
           </div>
         </div>
 
-        <div class="home-container">
-          <div class="map-container">
-            <div id="map" class="map"></div>
+        <div class="st-layout">
+          <div class="st-map-box">
+            <div id="map" class="st-map"></div>
           </div>
-          <div class="stories-container" id="stories-list"></div>
+          <div class="st-grid" id="stories-list"></div>
         </div>
       </section>
     `;
@@ -51,17 +51,17 @@ class HomePage {
 
   showLoading() {
     const storiesListDiv = document.getElementById('stories-list');
-    if (storiesListDiv) storiesListDiv.innerHTML = '<p>Loading stories...</p>';
+    if (storiesListDiv) storiesListDiv.innerHTML = '<p class="st-title" style="grid-column: 1/-1;">Membuka Gulungan Peta...</p>';
   }
 
   showEmpty() {
     const storiesListDiv = document.getElementById('stories-list');
-    if (storiesListDiv) storiesListDiv.innerHTML = '<p>No stories available.</p>';
+    if (storiesListDiv) storiesListDiv.innerHTML = '<p class="st-title" style="grid-column: 1/-1;">Lautan Kosong. Belum ada jejak.</p>';
   }
 
   showError(message) {
     const storiesListDiv = document.getElementById('stories-list');
-    if (storiesListDiv) storiesListDiv.innerHTML = `<p class="error-message">${message}</p>`;
+    if (storiesListDiv) storiesListDiv.innerHTML = `<p class="st-alert st-alert-error" style="grid-column: 1/-1;">${message}</p>`;
   }
 
   async showStories(stories) {
@@ -89,7 +89,8 @@ class HomePage {
 
     const map = L.map('map').setView([-6.200000, 106.816666], 5);
 
-    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // MENGGUNAKAN TILE PETA GELAP UNTUK TEMA BAJAK LAUT
+    const darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OpenStreetMap contributors',
     });
 
@@ -97,11 +98,11 @@ class HomePage {
       attribution: '&copy; OpenTopoMap contributors',
     });
 
-    osmLayer.addTo(map);
+    darkLayer.addTo(map);
 
     const baseMaps = {
-      'Street Map': osmLayer,
-      'Topographic Map': topoLayer,
+      'Peta Malam (Dark)': darkLayer,
+      'Peta Topografi': topoLayer,
     };
 
     L.control.layers(baseMaps).addTo(map);
@@ -111,7 +112,7 @@ class HomePage {
     stories.forEach((story) => {
       if (story.lat && story.lon) {
         const marker = L.marker([story.lat, story.lon]).addTo(map);
-        marker.bindPopup(`<b>${story.name}</b><br>${story.description.substring(0, 30)}...<br><a href="#/detail/${story.id}">Lihat Detail</a>`);
+        marker.bindPopup(`<b>${story.name}</b><br>${story.description.substring(0, 30)}...<br><a href="#/detail/${story.id}" style="color:#D4AF37; font-weight:bold;">Inspeksi Jejak</a>`);
         this.markers[story.id] = marker;
       }
     });
@@ -130,21 +131,21 @@ class HomePage {
     stories.forEach((story) => {
       const isFav = favSet.has(story.id);
       const storyElement = document.createElement('article');
-      storyElement.classList.add('story-item');
+      storyElement.classList.add('st-card');
       storyElement.tabIndex = 0;
 
       storyElement.innerHTML = `
-        <img src="${story.photoUrl}" alt="Photo by ${story.name}" class="story-image">
-        <div class="story-content">
-          <div class="story-header-flex">
-            <h2 class="story-name">${story.name}</h2>
-            <button class="btn btn-sm ${isFav ? 'btn-danger' : 'btn-secondary'} fav-btn" data-id="${story.id}" aria-label="Bookmark ${story.name}">
-              ${isFav ? '❤️ Favorited' : '🤍 Favorite'}
+        <img src="${story.photoUrl}" alt="Photo by ${story.name}" class="st-card-img">
+        <div class="st-card-body">
+          <div class="st-card-row">
+            <h2 class="st-card-title">${story.name}</h2>
+            <button class="st-fav-btn ${isFav ? 'active' : ''} fav-btn" data-id="${story.id}" aria-label="Bookmark ${story.name}">
+              ★
             </button>
           </div>
-          <p class="story-date">${new Date(story.createdAt).toLocaleDateString()}</p>
-          <p class="story-desc">${story.description}</p>
-          <a href="#/detail/${story.id}" class="detail-link mt-2">Read Detail &rarr;</a>
+          <p class="st-card-date">Berlabuh: ${new Date(story.createdAt).toLocaleDateString()}</p>
+          <p class="st-card-desc">${story.description}</p>
+          <a href="#/detail/${story.id}" class="st-btn st-btn-outline detail-link" style="margin-top:auto;">Buka Log</a>
         </div>
       `;
 
@@ -174,6 +175,8 @@ class HomePage {
     if (story.lat && story.lon && this.map && this.markers[story.id]) {
       this.map.flyTo([story.lat, story.lon], 12);
       this.markers[story.id].openPopup();
+      // Smooth scroll ke atas agar peta terlihat di layar HP
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 }

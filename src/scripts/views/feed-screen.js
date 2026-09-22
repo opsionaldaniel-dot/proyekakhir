@@ -14,7 +14,7 @@ class FeedScreen {
         </div>
 
         <div class="feed-header">
-          <h1>Chronicles Feed & Geo-Grid</h1>
+          <h1>bajak laut(onepiece)</h1>
           <div class="search-field">
             <input type="text" id="feed-search-input" placeholder="Search chronicles..." aria-label="Search stories">
           </div>

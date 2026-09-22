@@ -6,10 +6,10 @@ class ComposerScreen {
   async render() {
     return `
       <section class="composer-wrapper">
-        <h1>Publish New Chronicle</h1>
+        <h1>Publish anggota New bajak laut</h1>
         <form id="composer-form">
           <div class="field-group">
-            <label for="narrative">Chronicle Narrative</label>
+            <label for="narrative">anggota New bajak laut</label>
             <textarea id="narrative" rows="4" required placeholder="Type your narrative here..."></textarea>
           </div>
 
